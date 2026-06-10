@@ -1,0 +1,27 @@
+[dcv-autosession]
+# Path to the DCV command
+# Default: C:\Program Files\Amazon\DCV\Server\bin\dcv.exe or C:\Program Files\NICE\DCV\Server\bin\dcv.exe
+# dcv_path = C:\Program Files\NICE\DCV\Server\bin\dcv.exe
+# Interval in seconds between idle session reaper checks (0 disables)
+reap_interval = 120
+# Path to the DCV server log file
+# Default: C:\ProgramData\Amazon\dcv\log\server.log or C:\ProgramData\NICE\dcv\log\server.log
+# dcvserver_log = C:\ProgramData\NICE\dcv\log\server.log
+# Owner of the auto-created session
+# Default: Administrator
+session_owner = Administrator
+# ID of the auto-created session
+# Default: autosession
+session_id = autosession
+# regex to match in the DCV server log for triggering session creation
+# Default: Received authentication request from client
+trigger_regex = Received authentication request from client
+
+[log]
+# Log level. Default: info
+# Valid values: debug, info, warning, error, critical
+level = info
+# Directory for log file output. Default: C:\ProgramData\dcv-autosession\log 
+directory = C:\ProgramData\dcv-autosession\log
+# Maximum number of rotated log files to retain each 100Mb. Default: 2
+rotation = 2

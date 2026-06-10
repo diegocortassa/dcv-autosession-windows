@@ -1,0 +1,91 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  installer:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Get version from tag
+        id: get_version
+        run: |
+          $tag = "${{ github.ref }}"
+          $version = $tag -replace 'refs/tags/v', ''
+          echo "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Install NSIS
+        run: |
+          choco install nsis --no-progress
+          echo "C:\Program Files (x86)\NSIS" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.26'
+
+      - name: Build and package
+        run: |
+          make installer VERSION=${{ env.VERSION }}
+
+      - name: Prepare artifacts
+        run: |
+          mkdir artifacts
+          cp dist/installer/*.exe artifacts/
+          cp dist/dcv-autosession-v${{ env.VERSION }}*.zip artifacts/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets-windows
+          path: artifacts/*
+
+
+  release:
+    needs: [installer]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-assets-windows
+
+      - name: Generate checksums
+        run: sha256sum *.zip *.exe > checksums.txt
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            *.exe
+            *.zip
+            checksums.txt
+          name: dcv-autosession ${{ env.VERSION }}
+          body: |
+            ## dcv-autosession ${{ env.VERSION }}
+            
+            ### Packages
+            - Windows installer
+            - Zip package for Windows
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
